@@ -1,15 +1,11 @@
 #!/usr/bin/python
 # coding=utf-8
 
-import time,os,sys, time, signal, pygame
-
+import time,os,sys, signal, pygame
 import Adafruit_GPIO.SPI as SPI
 import RPi.GPIO as GPIO
 import Adafruit_SSD1306
-
 from PIL import Image
-
-
 import av
 from av.frame import Frame
 from av.packet import Packet
@@ -81,7 +77,7 @@ for frame in clip.decode(video=0):
 
     imgs = frame.to_image() ## 提取视频帧
     # img = imgs.resize((disp.width, disp.height), Image.ANTIALIAS).convert('1')  ## 将图片分辨率调整为屏幕大小，色彩1bit
-    img = imgs.convert('1')  ##色彩1bit
+    img = imgs.convert('1')  #如果视频分辨率匹配屏幕使用此项,色彩1bit
     disp.image(img)
     disp.display()
 
