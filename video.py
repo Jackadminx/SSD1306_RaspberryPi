@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding=utf-8
 
-import time,os
+import time,os,sys, time, signal, pygame
 
 import Adafruit_GPIO.SPI as SPI
 import RPi.GPIO as GPIO
@@ -17,7 +17,14 @@ from av.stream import Stream
 from av.utils import AVError
 from av.video import VideoFrame
 
+print("终端模式下，你可以按下ctrl+c键结束程序")
 
+def signal_handler(signal, frame):
+    print("\n你摁下了Ctrl+C!程序结束")
+    pygame.mixer.music.stop()
+    sys.exit()
+
+signal.signal(signal.SIGINT, signal_handler)
 
 # Raspberry Pi pin configuration:
 RST = 24
@@ -52,35 +59,41 @@ disp.begin()
 disp.clear()
 disp.display()
 
-# Load image based on OLED display height.  Note that image is converted to 1 bit color.
-# if disp.height == 64:
-#     image = Image.open('happycat_oled_64.ppm').convert('1')
-# else:
-#     image = Image.open('happycat_oled_32.ppm').convert('1')
+# 12864.mp4 128*64 24帧，无音频
 
-image = Image.open('test.png').convert('1')
-
-
-# Alternatively load a different format image, resize it, and convert to 1 bit color.
-#image = Image.open('happycat.png').resize((disp.width, disp.height), Image.ANTIALIAS).convert('1')
-
-# Display image.
-disp.image(image)
-disp.display()
-
-time.sleep(1)
-
-
-
-video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'A.mp4'))
+video_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '12864.mp4'))
 print('Loading {}...'.format(video_path))
 
 clip = av.open(video_path)
 
+pygame.init()
+track = pygame.mixer.music.load('12864.mp3')
+pygame.mixer.music.play()
+# 加载音频
+
+
 for frame in clip.decode(video=0):
+    starttime = time.time() # 记录开始时间
+
     print('{} ------'.format(frame.index))
+
+    # print(format(frame.index))
+
     imgs = frame.to_image() ## 提取视频帧
-    img = imgs.resize((disp.width, disp.height), Image.ANTIALIAS).convert('1')  ## 将图片分辨率调整为屏幕大小，色彩1bit
+    # img = imgs.resize((disp.width, disp.height), Image.ANTIALIAS).convert('1')  ## 将图片分辨率调整为屏幕大小，色彩1bit
+    img = imgs.convert('1')  ##色彩1bit
     disp.image(img)
     disp.display()
+
+    endtime = time.time() #结束时间
+    times = endtime - starttime #显示该帧所用时间
+    timec = round(times,3)
+    print(timec),
+
+    if(timec < 0.040): #该视频为24帧,每帧所用时间1/24=0.041,如果小于0.041则暂停,以免播放过快
+        print(0.040-timec) # 测试后发现每帧0.04秒最佳
+        time.sleep(0.040-timec)
+
+    endtimes = time.time()
+    print(endtimes - starttime)
 
